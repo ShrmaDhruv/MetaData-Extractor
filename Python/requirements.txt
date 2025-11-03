@@ -15,4 +15,4 @@ poppler-utils
 ultralytics
 python-multipart
 fastapi 
-uvicon
+uvicorn

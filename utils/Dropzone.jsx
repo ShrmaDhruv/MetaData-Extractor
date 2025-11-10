@@ -34,11 +34,12 @@ export default function MyDropzone() {
     try {
       const res = await fetch("http://127.0.0.1:8000/process/");
       const data = await res.json();
-      if (data.content) {
-        navigate("/process", { state: { content: data.content } });
-      } else {
-        alert("Processing failed: " + (data.error || "Unknown error"));
-      }
+
+      console.log("BACKEND RAW DATA:", data);
+      debugger;
+
+      navigate("/process", { state: { content: JSON.parse(JSON.stringify(data)) } });
+
     } catch (err) {
       console.error(err);
       alert("Error connecting to backend");
@@ -46,6 +47,7 @@ export default function MyDropzone() {
       setLoading(false);
     }
   };
+
 
   const onDrop = useCallback((acceptedFiles) => {
     const mapped = acceptedFiles.map((file) =>
@@ -101,11 +103,10 @@ export default function MyDropzone() {
     <section className="flex flex-col items-center justify-center p-6">
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-10 w-full max-w-lg text-center cursor-pointer transition ${
-          isDragActive
+        className={`border-2 border-dashed rounded-lg p-10 w-full max-w-lg text-center cursor-pointer transition ${isDragActive
             ? "border-blue-500 bg-blue-50"
             : "border-gray-400 hover:border-blue-500 hover:bg-blue-50"
-        }`}
+          }`}
       >
         <input {...getInputProps()} />
         <p className="text-gray-600">
@@ -120,11 +121,10 @@ export default function MyDropzone() {
       {uploadMessage && (
         <div className="mt-4 text-center">
           <p
-            className={`font-medium ${
-              uploadMessage.startsWith("File uploaded successfully")
+            className={`font-medium ${uploadMessage.startsWith("File uploaded successfully")
                 ? "text-green-600"
                 : "text-red-600"
-            }`}
+              }`}
           >
             {uploadMessage}
           </p>
@@ -134,11 +134,10 @@ export default function MyDropzone() {
               <button
                 onClick={handleProcess}
                 disabled={loading}
-                className={`mt-3 px-4 py-2 rounded-lg transition ${
-                  loading
+                className={`mt-3 px-4 py-2 rounded-lg transition ${loading
                     ? "bg-blue-400 cursor-not-allowed text-white"
                     : "bg-blue-600 hover:bg-blue-700 text-white"
-                }`}
+                  }`}
               >
                 {loading ? (
                   <div className="flex items-center justify-center gap-2">

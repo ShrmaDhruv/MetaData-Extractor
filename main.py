@@ -1,9 +1,11 @@
 from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import shutil
 import os
 import Python.OCR as my
-from Python.page1 import SummarizeSection
+from Python.page2 import SummarizeSection
+import json
 
 app = FastAPI()
 
@@ -39,6 +41,11 @@ async def process_file():
     try:
         my.output(PDF_NAME)
         result = SummarizeSection()
-        return {"content": result}
+
+        # FORCE PURE JSON SAFE FORMAT
+        safe_json = json.loads(json.dumps(result, default=str))
+
+        return JSONResponse(content=safe_json)
     except Exception as e:
         return {"error": str(e)}
+

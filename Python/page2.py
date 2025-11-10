@@ -48,6 +48,7 @@ def SummarizeSection():
             else:
                 if current_content_key:
                     data_dict[current_content_key] += line + " "
+        # print(data_dict)
 
         
         return data_dict

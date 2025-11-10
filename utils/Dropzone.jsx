@@ -36,7 +36,7 @@ export default function MyDropzone() {
       const data = await res.json();
 
       console.log("BACKEND RAW DATA:", data);
-      debugger;
+      // debugger;
 
       navigate("/process", { state: { content: JSON.parse(JSON.stringify(data)) } });
 

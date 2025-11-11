@@ -81,9 +81,9 @@ thop==0.1.1.post2209072238
 threadpoolctl==3.6.0
 tokenizers==0.22.1
 toml==0.10.2
-torch==2.5.1+cu121
-torchaudio==2.5.1+cu121
-torchvision==0.20.1+cu121
+torch==2.5.1
+torchaudio==2.5.1
+torchvision==0.20.1
 tornado==6.5.2
 tqdm==4.67.1
 transformers==4.57.1

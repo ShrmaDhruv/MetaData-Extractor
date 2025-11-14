@@ -5,7 +5,7 @@
 [TITLE] DOCLAYOUT-YOLO: ENHANCING DOCUMENT LAYOUT ANALYSIS THROUGH DIVERSE SYNTHETIC DATA AND GLOBAL-TO-LOCAL ADAPTIVE PERCEPTION
 
 
-[PLAIN_TEXT] Zhiyuan Zhao; Hengrui Kang; Bin Wang, Conghui He ' Shanghai Artificial Intelligence Laboratory
+[PLAIN_TEXT] Zhiyuan Zhao; Hengrui Kang; Bin Wang, Conghui He ' Shanghai Artificial Intelligence Laboratory 
 
 [TITLE] ABSTRACT
 

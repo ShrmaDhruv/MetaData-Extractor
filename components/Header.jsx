@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, NavLink } from "react-router-dom";
+import { Routes, Route, NavLink, Link } from "react-router-dom";
 import HomePage from "./HomePage";
 import About from "../utils/About";
 import Contact from "../utils/Contact";
@@ -10,10 +10,18 @@ export default function Header() {
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <header className="bg-white/70 backdrop-blur-md border-b border-gray-200 shadow-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-2xl md:text-3xl font-extrabold bg-gradient-to-r from-indigo-600 via-blue-500 to-cyan-400 bg-clip-text text-transparent tracking-wide">
-            Smart Research Paper Analyzer
-          </h1>
 
+          {/* Title (click → Home) */}
+          <Link
+            to="/"
+            className="text-2xl md:text-3xl font-extrabold bg-gradient-to-r
+                       from-indigo-600 via-blue-500 to-cyan-400 bg-clip-text 
+                       text-transparent tracking-wide cursor-pointer"
+          >
+            MetaData Extractor
+          </Link>
+
+          {/* Navigation */}
           <nav className="hidden md:flex space-x-8">
             <NavLink
               to="/"

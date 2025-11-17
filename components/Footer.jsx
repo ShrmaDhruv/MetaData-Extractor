@@ -1,15 +1,17 @@
 export default function Footer() {
   return (
-    <footer className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-gray-300 w-full py-10 mt-20 shadow-inner">
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10 text-center md:text-left">
+    <footer className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-gray-300 w-full py-20 mt-20 shadow-inner">
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-10 text-center md:text-left">
+        
         {/* Left Section */}
         <div>
           <h2 className="text-2xl font-bold text-white mb-3">
-            Smart Research Paper Analyzer
+            MetaData Extractor
           </h2>
           <p className="text-gray-400 text-sm leading-relaxed">
-            An AI-powered tool that analyzes, understands, and extracts key
-            information from research papers seamlessly.
+            An AI-powered system that intelligently detects, extracts, and refines 
+            metadata from the first page of research papers using deep-learning 
+            and OCR-driven text processing.
           </p>
         </div>
 
@@ -34,6 +36,7 @@ export default function Footer() {
             </li>
           </ul>
         </div>
+
       </div>
     </footer>
   );

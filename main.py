@@ -19,7 +19,24 @@ app.add_middleware(
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 PDF_NAME = ""
+
+
+# ====================================================
+# DELETE ALL FILES IN uploads/ WHEN BACKEND STARTS
+# ====================================================
+@app.on_event("startup")
+async def clean_uploads_folder():
+    folder = UPLOAD_FOLDER
+    for filename in os.listdir(folder):
+        file_path = os.path.join(folder, filename)
+        try:
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+        except Exception as e:
+            print(f"Failed to delete {file_path}: {e}")
+
 
 @app.post("/upload/")
 async def upload_file(file: UploadFile = File(...)):
@@ -33,6 +50,7 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         return {"error": str(e)}
 
+
 @app.get("/process/")
 async def process_file():
     global PDF_NAME
@@ -42,10 +60,9 @@ async def process_file():
         my.output(PDF_NAME)
         result = SummarizeSection()
 
-        # FORCE PURE JSON SAFE FORMAT
+        # Ensure JSON safe format
         safe_json = json.loads(json.dumps(result, default=str))
 
         return JSONResponse(content=safe_json)
     except Exception as e:
         return {"error": str(e)}
-

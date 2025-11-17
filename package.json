@@ -1,5 +1,5 @@
 {
-  "name": "job-classifier",
+  "name": "metadata-extractor",
   "version": "1.0.0",
   "description": "MetaData Extractor project",
   "scripts": {

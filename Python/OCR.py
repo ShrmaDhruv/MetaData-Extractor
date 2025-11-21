@@ -11,7 +11,31 @@ import re
 # from page1 import SummarizeSection
 
 def load_model(device):
-    return YOLOv10("../models/doclayout_yolo_docstructbench_imgsz1280_2501.pt").to(device)
+    """
+    Load the DocLayout YOLO model using a path that is robust to the
+    current working directory (important inside Docker).
+
+    Previously we used a plain relative path ("../models/...") which was
+    resolved from the process working directory (e.g. `/app` in Docker).
+    That pointed to `/models/...`, while the actual weights live in
+    `/app/models/...`, so the file could not be found and `/process/`
+    returned an error.
+
+    We now build the path relative to this file so it works both locally
+    and in the container.
+    """
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(
+        base_dir, "..", "models", "doclayout_yolo_docstructbench_imgsz1280_2501.pt"
+    )
+    model_path = os.path.abspath(model_path)
+
+    if not os.path.exists(model_path):
+        # Make the failure explicit so the API returns a clear message
+        raise FileNotFoundError(f"Model weights not found at: {model_path}")
+
+    return YOLOv10(model_path).to(device)
 
 # OCR helper
 

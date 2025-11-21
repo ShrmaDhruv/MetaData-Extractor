@@ -14,7 +14,7 @@ export default function MyDropzone() {
     formData.append("file", file);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/upload/", {
+      const res = await fetch("/upload/", {
         method: "POST",
         body: formData,
       });
@@ -32,7 +32,7 @@ export default function MyDropzone() {
   const handleProcess = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://127.0.0.1:8000/process/");
+      const res = await fetch("/process/");
       const data = await res.json();
 
       console.log("BACKEND RAW DATA:", data);

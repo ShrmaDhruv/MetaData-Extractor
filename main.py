@@ -1,6 +1,7 @@
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import shutil
 import os
 import Python.OCR as my
@@ -66,3 +67,36 @@ async def process_file():
         return JSONResponse(content=safe_json)
     except Exception as e:
         return {"error": str(e)}
+
+
+# Serve static files (frontend) if static directory exists (production/Docker)
+# API routes defined above will be matched first, then static files are served
+if os.path.exists("static"):
+    from fastapi.responses import FileResponse
+    
+    # Serve root with index.html
+    @app.get("/")
+    async def read_root():
+        index_path = os.path.join("static", "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+        return {"message": "Frontend not built"}
+    
+    # Catch-all for static assets and SPA routing
+    # FastAPI matches specific routes first, so /upload/ and /process/ work correctly
+    @app.get("/{full_path:path}")
+    async def serve_static_or_spa(full_path: str):
+        # Skip API routes (with or without trailing slash)
+        if full_path in ("upload", "upload/", "process", "process/") or full_path.startswith(("api/", "docs", "openapi.json", "redoc")):
+            return {"error": "Not found"}
+        
+        # Try to serve the requested file from static directory
+        file_path = os.path.join("static", full_path)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        
+        # Otherwise serve index.html for SPA routing
+        index_path = os.path.join("static", "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+        return {"error": "Frontend not found"}

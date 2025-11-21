@@ -3,7 +3,7 @@ import { Routes, Route, NavLink, Link } from "react-router-dom";
 import HomePage from "./HomePage";
 import About from "../utils/About";
 import Contact from "../utils/Contact";
-import Process from "../utils/Process";
+import Process from "../utils/process";
 
 export default function Header() {
   return (

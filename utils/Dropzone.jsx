@@ -35,7 +35,7 @@ export default function MyDropzone() {
       const res = await fetch("http://127.0.0.1:8000/process/");
       const data = await res.json();
 
-      console.log("BACKEND RAW DATA:", data);
+      // console.log("BACKEND RAW DATA:", data);
       // debugger;
 
       navigate("/process", { state: { content: JSON.parse(JSON.stringify(data)) } });

@@ -8,10 +8,12 @@ from pdf2image import convert_from_path
 from doclayout_yolo import YOLOv10
 import shutil
 import re
+import uuid
 # from page1 import SummarizeSection
 
 def load_model(device):
-    return YOLOv10("../models/doclayout_yolo_docstructbench_imgsz1280_2501.pt").to(device)
+    # print(os.getcwd())
+    return YOLOv10(os.path.join(os.getcwd(),"./models/doclayout_yolo_docstructbench_imgsz1280_2501.pt")).to(device)
 
 # OCR helper
 
@@ -23,7 +25,7 @@ def run_zoom_ocr(frame, coords,lbl=""):
     zoom = cv2.resize(roi, (roi.shape[1]*2, roi.shape[0]*2), interpolation=cv2.INTER_CUBIC)
     raw_text = pytesseract.image_to_string(zoom, lang="eng")
     text = raw_text.strip()
-    if lbl in ["section_header", "heading", "subtitle","title"]:
+    if lbl == 'title':
         text = text.replace("\n", " ")
         text = text.replace("- ", "")
     return text
@@ -45,18 +47,49 @@ def process_page(frame, page_num,model):
     results = model.predict(frame)
     boxes = results[0].boxes
     classes = results[0].names
+    rframe=results[0].plot()
+    cv2.imwrite("output.png",rframe)
     # Collect detections
     detections = []
-    for box in boxes:
+    for i,box in enumerate(boxes):
         cls_id = int(box.cls.cpu().numpy())
         label = classes[cls_id].lower().replace(" ", "_")
         x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+            # ------------ SAVE ROI FOR LOGGING ------------
+        # log_dir = "./data/log_crops"
+        # os.makedirs(log_dir, exist_ok=True)
+        # roi = frame[y1:y2, x1:x2]
+        # if roi.size != 0:
+        #     log_path = os.path.join(log_dir, f"{label}_{page_num}_{i}.png")
+        #     cv2.imwrite(log_path, roi)
+        #     print(f"Logged crop: {log_path}")
         detections.append({"label": label, "coords": (x1, y1, x2, y2)})
     # Sort by vertical position
-    detections = sorted(detections, key=lambda d: d["coords"][1])
+    # detections = sorted(detections, key=lambda d: d["coords"][1])
+    detections = sorted(detections, key=lambda d: (d["coords"][1], d["coords"][0]))
+    # Detect column cutoff (mid X of page)
+    mid_x = frame.shape[1] // 2
+
+    left_col = [d for d in detections if d["coords"][0] <= mid_x]
+    right_col = [d for d in detections if d["coords"][0] > mid_x]
+
+    # Sort each column then combine
+    left_col  = sorted(left_col,  key=lambda d: (d["coords"][1], d["coords"][0]))
+    right_col = sorted(right_col, key=lambda d: (d["coords"][1], d["coords"][0]))
+
+    # final merge left → right
+    detections = left_col + right_col
+
     printed_items = []
     printed_captions = set()
-    prev_lbl = ""
+    # prev_lbl = ""
+    # 👉 Detect the first section block (like Abstract, Introduction)
+    first_section_y = None
+    for d in detections:
+        if d["label"] in ["section_header", "heading", "subtitle"]:
+            first_section_y = d["coords"][1]
+            break
+
 
     # Same text formating
     def normalize_text(text):
@@ -71,31 +104,10 @@ def process_page(frame, page_num,model):
         text = fix_hyphenation(text)
         text = re.sub(r"\s+", " ", text)
         return text.strip()
-    # Duplicate Text
-    def is_duplicate(new_text, new_coords, printed_items, iou_threshold=0.5):
-        norm_text = normalize_text(new_text)
-        x1, y1, x2, y2 = new_coords
-
-        for old_text, old_coords in printed_items:
-            ox1, oy1, ox2, oy2 = old_coords
-            if norm_text == old_text:
-                return True
-            inter_x1, inter_y1 = max(x1, ox1), max(y1, oy1)
-            inter_x2, inter_y2 = min(x2, ox2), min(y2, oy2)
-            inter_area = max(0, inter_x2 - inter_x1) * max(0, inter_y2 - inter_y1)
-            if inter_area == 0:
-                continue
-
-            new_area = (x2 - x1) * (y2 - y1)
-            old_area = (ox2 - ox1) * (oy2 - oy1)
-            union_area = new_area + old_area - inter_area
-
-            if union_area > 0 and inter_area / union_area > iou_threshold:
-                return True
-        return False
-
+    plain_text=set()
     # Write text
     with open("./data/content.txt","a", encoding="utf-8") as file:
+        
         file.write(f"\n---------PAGE {page_num}--------\n\n")
 
         for idx, det in enumerate(detections):
@@ -107,26 +119,26 @@ def process_page(frame, page_num,model):
 
             if not text and lbl not in ["figure", "image", "table"]:  # Not Recongnized values
                 continue
-
-            if text and is_duplicate(text, coords, printed_items): #Duplicate glitch
-                continue
-
+            
             if text:
                 printed_items.append((normalize_text(text), coords))
             if lbl == "title":
                 file.write(f"\n[{lbl.upper()}] {text}\n\n")
-                prev_lbl = lbl
+                # prev_lbl = lbl
+                plain_text.add(text)
+            # 👉 AUTHORS BLOCK: text that is below title but above first section (e.g. Abstract)
+            if text  and first_section_y is not None and coords[1] < first_section_y:
+                file.write(f"[PLAIN_TEXT] {text}\n")
+                printed_items.append((normalize_text(text), coords))
+                continue
 
-            elif lbl in ["section_header", "heading", "subtitle"]:
-                file.write(f"\n[{lbl.upper()}] {text}\n\n")
-                prev_lbl = lbl
-
-            elif lbl in ["plain_text", "paragraph", "text"]:
-                if prev_lbl == lbl:
-                    file.write(f"{text}\n")
-                else:
-                    file.write(f"\n[{lbl.upper()}] {text}\n")
-                    prev_lbl = lbl
+            elif lbl in ["plain_text"]:
+                if printed_items and coords[0] > mid_x :
+                    file.write("\n")
+                
+                file.write(f"\n[{lbl.upper()}] {text}\n")
+                # prev_lbl = lbl
+                plain_text.add(text)
             elif lbl in ["figure", "image", "table"] or ('formula' in lbl and 'formula_caption' not in lbl):
                 img_path = save_region_image(frame, coords, lbl, idx)
                 if img_path:

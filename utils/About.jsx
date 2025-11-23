@@ -39,7 +39,7 @@ export default function About() {
 
         <p className="text-gray-700 text-lg leading-relaxed mb-6">
           Once extracted, the metadata is presented to the user in a clean, organized format.
-          Fields like <span className="font-semibold">authors and emails</span> are made fully{" "}
+          Fields like <span className="font-semibold">authors, affiliations, keywords and emails</span> are made fully{" "}
           <span className="font-semibold">editable</span>, allowing users to correct OCR errors,
           remove duplicates, or update details before finalizing. This ensures that the resulting metadata
           is not only machine-extracted but also <span className="font-semibold">human-verified and polished.</span>

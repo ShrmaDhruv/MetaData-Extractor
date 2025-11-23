@@ -1,181 +1,288 @@
-import warnings
 import re
+import spacy
+import os
+import unicodedata
+import string
 
-warnings.filterwarnings("ignore")
+# Load spaCy 
+def load_tagged_lines(text):
+    lines = []
+    for line in text.split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("[TITLE]"):
+            lines.append(("[TITLE]", line.replace("[TITLE]", "").strip()))
+        elif line.startswith("[PLAIN_TEXT]"):
+            lines.append(("[PLAIN_TEXT]", line.replace("[PLAIN_TEXT]", "").strip()))
+    return lines
 
 
-def SummarizeSection():
-    INPUT_FILE = "./data/content.txt"
+def validate_with_regex(text,AFFILIATION_REGEX):
 
-    with open(INPUT_FILE, 'r', encoding='utf-8') as page:
-        content = [line.rstrip("\n") for line in page if line.strip()]
+    # Final regex to validate & clean
+    match = AFFILIATION_REGEX.search(text)
+    return match.group(1).strip() if match else None
 
-    data_dict = {}
-    title_count = 0
-    current_content_key = None
+def extract_affiliation_hybrid(text, nlp):
+    affiliations = set()
 
-    # For collecting content lines before finalizing
-    content_lines = []
+    # ---------------------------
+    # Step 1: Extract USING REGEX first
+    # ---------------------------
+    AFFILIATION_CANDIDATE_REGEX = re.compile(
+        r"[A-Z][A-Za-z&., '\-]*(Université|University|Institute|College|Hospital|Center|Centre|School|Laboratory|Labs|Research)[A-Za-z&., '\-]*"
+    )
+    AFFILIATION_REGEX = re.compile(
+        r"\b([A-Z][A-Za-z&., '\-]*(Université|University|Institute|College|Hospital|Center|Centre|School|Laboratory|Labs|Research)[A-Za-z&., '\-]*)\b"
+    )
+    candidates = AFFILIATION_CANDIDATE_REGEX.findall(text)
+    
+    # candidates is list of tuples — extract first element
+    candidates = [c[0] if isinstance(c, tuple) else c for c in candidates]
 
-    # AUTHOR section handling
-    reading_authors = False
-    author_extracted = False
-    author_block = ""
+    # ---------------------------
+    # Step 2: Run each candidate through spaCy ORG classifier
+    # ---------------------------
+    for cand in candidates:
+        doc = nlp(cand)
+        for ent in doc.ents:
+            if ent.label_ == "ORG":
+                cleaned = validate_with_regex(ent.text,AFFILIATION_REGEX)
+                if cleaned:
+                    affiliations.add(cleaned)
 
-    for raw_line in content:
-        line = raw_line.strip()
+    # ---------------------------
+    # Step 3: also allow direct regex extraction
+    # ---------------------------
+    for match in re.findall(AFFILIATION_REGEX, text):
+        affiliations.add(match[0])
 
-        # -----------------------------------------------------
-        # AUTHOR BLOCK START (first PLAIN_TEXT after TITLE1)
-        # -----------------------------------------------------
-        if not author_extracted and line.startswith("[PLAIN_TEXT]") and title_count == 1:
-            reading_authors = True
-            author_block += line.replace("[PLAIN_TEXT]", "").strip() + " "
+    return list(affiliations)
+
+def is_affiliation_line(text,nlp):
+
+    text = unicodedata.normalize("NFKC", text)
+
+    replacements = {
+        "!”": "", "!?": "", "?!": "",
+        "”": "", "“": "", "’": "'", "‘": "'",
+        "—": "-", "–": "-",
+        "·": " ", "•": " ", "|": " ",
+        "{": " ", "}": " ", "[": " ", "]": " ",
+        "  ": " "
+    }
+
+    for wrong, right in replacements.items():
+        text = text.replace(wrong, right)
+
+        text = re.sub(r"([.,])([A-Za-z])", r"\1 \2", text)
+
+        text = re.sub(r"[^\w\s.,@\-()/&]", " ", text)
+
+        text = re.sub(r"\s+", " ", text)
+    ans  = extract_affiliation_hybrid(text, nlp)
+    if (len(ans) == 0):return ans
+    return ans[0].split(",")
+
+def extract_persons(text,nlp):
+    replacements = {
+        "!”": "", "!?": "", "?!": "",
+        "”": "", "“": "", "’": "'", "‘": "'",
+        "—": "-", "–": "-",
+        "·": " ", "•": " ", "|": " ",
+        "{": " ", "}": " ", "[": " ", "]": " ",
+        "  ": " ",
+        '?': ','
+    }
+
+    for wrong, right in replacements.items():
+        text = text.replace(wrong, right)
+    doc = nlp(text)
+    return [ent.text.strip(",") for ent in doc.ents if ent.label_ == "PERSON"]
+
+def clean(text):
+    return text.strip(" :\t\n")
+
+def parse_paper(lines,nlp):
+    result = {
+        "TITLE": "",
+        "METADATA": {
+            "AUTHORS": [],
+            "EMAILS": [],
+            "AFFILIATIONS": [],
+            "KEYWORDS": []
+        },
+        "ABSTRACT": ""
+    }
+
+    authors = set()
+    emails = set()
+    affiliations = set()
+    keywords = []
+    
+    abstract = []
+    in_abstract = False
+    
+    main_title_found = False
+
+    i = 0
+    while i < len(lines):
+        tag, content = lines[i]
+        text = content.strip()
+
+        # 1. DETECT MAIN TITLE
+        if tag == "[TITLE]" and not main_title_found:
+            result["TITLE"] = clean(text)
+            main_title_found = True
+            i += 1
+            continue
+        
+
+        # 2. DETECT ABSTRACT START
+        txt_lower = text.lower()
+
+        if ("abstract" in txt_lower[:20] or txt_lower.startswith("abstract")) and not in_abstract:
+            in_abstract = True
+            
+            # Remove "Abstract" word if present
+            text = re.sub(r"^abstract[:\s-]*", "", text, flags=re.I).strip()
+            if text:
+                abstract.append(text)
+            i += 1
             continue
 
-        # -----------------------------------------------------
-        # CAPTURE MULTI-LINE AUTHORS UNTIL TITLE or ABSTRACT
-        # -----------------------------------------------------
-        if reading_authors:
-            if line.startswith("[TITLE]") or line.upper().startswith("ABSTRACT"):
-                reading_authors = False
-                author_extracted = True
+        # 3. CAPTURE ABSTRACT CONTENT
+        if in_abstract:
+            # Stop if KEYWORD encountered
+            if "keyword" in txt_lower or "index terms" in txt_lower:
+                in_abstract = False
 
-                authors, emails = process_author_block(author_block)
-
-                data_dict["AUTHOR"] = authors
-                if emails:
-                    data_dict["EMAIL"] = emails
-
-                # Continue processing this TITLE/ABSTRACT normally
-            else:
-                author_block += " " + line
+                # Extract keywords immediately
+                kw = re.sub(r"(?i)^[^\w]*?(?:keywords?|index\s+terms?)\b[:\s-]*", "", text).strip()
+                kw = kw.split(",")
+                keywords.extend([clean(k) for k in kw if k.strip()])
+                i += 1
+                continue
+            
+            # Stop if NEW title is encountered
+            if tag == "[TITLE]":
+                in_abstract = False
+                i += 1
                 continue
 
-        # -----------------------------------------------------
-        # TITLE (tagged)
-        # -----------------------------------------------------
-        if line.startswith("[TITLE]"):
+            # Append abstract line
+            abstract.append(text)
 
-            # finalize previous content block
-            if current_content_key:
-                finalize_content_block(data_dict, current_content_key, content_lines)
-                content_lines = []
-
-            title_count += 1
-            title_text = line.replace("[TITLE]", "").strip()
-
-            data_dict[f"TITLE{title_count}"] = title_text
-
-            current_content_key = f"CONTENT{title_count}"
-            data_dict[current_content_key] = ""  # placeholder
+            # If a sentence ends with period, abstract ends
+            if text.endswith("."):
+                in_abstract = False
+            i += 1
             continue
 
-        # -----------------------------------------------------
-        # ABSTRACT (untagged)
-        # -----------------------------------------------------
-        if line.upper().startswith("ABSTRACT"):
+        # 4. DETECT KEYWORDS (non-abstract case)
+        if tag == "[TITLE]" and re.search(r"\b(?:keywords?|index terms?)\b", text, flags=re.I):
+    # Move to next line which must be PLAIN_TEXT
+            j = i + 1
+            keyword_buffer = []
+            count = 0
+            while j < len(lines):
+                nt, nc = lines[j]
+                nc = nc.strip()
+                
 
-            # finalize previous content block
-            if current_content_key:
-                finalize_content_block(data_dict, current_content_key, content_lines)
-                content_lines = []
+                # Stop if a NEW title starts → end of keyword block
+                if nt == "[TITLE]":
+                    break
+                if nt == "[PLAIN_TEXT]":
+                    count+=1
+                    if count > 1:
+                        break
+                
 
-            title_count += 1
-            data_dict[f"TITLE{title_count}"] = "ABSTRACT"
+                # Collect this line
+                keyword_buffer.append(nc)
 
-            current_content_key = f"CONTENT{title_count}"
-            data_dict[current_content_key] = ""
+                # Stop at first period
+                if "." in nc:
+                    break
 
-            # Case: ABSTRACT has text in same line
-            after = line[len("ABSTRACT"):].strip()
-            if after:
-                content_lines.append(after)
+                j += 1
+
+            # Join, remove period, split by comma
+            kw_text = " ".join(keyword_buffer)
+            kw_text = kw_text.split(".")[0]  # content only before period
+            kws = [clean(k) for k in kw_text.split(",") if k.strip()]
+            keywords.extend(kws)
+
+            # Advance pointer
+            i = j + 1
             continue
-
-        # -----------------------------------------------------
-        # CONTENT (tagged)
-        # -----------------------------------------------------
-        if line.startswith("[PLAIN_TEXT]"):
-            text = line.replace("[PLAIN_TEXT]", "").strip()
-            if current_content_key:
-                content_lines.append(text)
+        if "keyword" in txt_lower or "index terms" in txt_lower:
+            kw = re.sub(r"(?i)^[^\w]*?(?:keywords?|index\s+terms?)\b[:\s-]*", "", text).strip()
+            kw = kw.split(",")
+            keywords.extend([clean(k) for k in kw if k.strip()])
+            i += 1
             continue
+       
+        # 5. EXTRACT EMAILS ANYWHERE
+        def extract_emails(text):
+            text = re.sub(r"{([^}]+)}\s*@\s*([\w\.-]+\.\w+)", 
+                        lambda m: ", ".join([f"{x.strip()}@{m.group(2)}" 
+                        for x in m.group(1).split(",")]), 
+                        text)
+            text = text.replace(" }@", "@").replace("} @", "@")
+            email_pattern = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+            emails = re.findall(email_pattern, text)
+            return list(set(emails))
+        
+        for x in extract_emails(text):
+            emails.add(x)
+       
+        # 6. DETECT AUTHORS (NER)
+        persons = extract_persons(text,nlp)
+        for p in persons:
+            authors.add(p.strip(string.punctuation))
 
-        # -----------------------------------------------------
-        # GENERAL CONTENT LINE
-        # -----------------------------------------------------
-        if current_content_key:
-            content_lines.append(line)
-            continue
+        # ----------------------------
+        # 7. DETECT AFFILIATIONS
+        # ----------------------------
+        aff =  is_affiliation_line(text,nlp)
+        for x in aff:
+            added = False
+            x=x.strip()
+            for author in authors:
+                if author in x:
+                    cleaned = x.replace(author, "").strip(" ,.-\n")
+                    if cleaned:
+                        affiliations.add(cleaned)
+                    added = True
+                    break
+            
+            # If no author name was found in x → add the full text
+            if not added:
+                affiliations.add(x) 
 
-    # -----------------------------------------------------
-    # FINAL BLOCK (after loop ends)
-    # -----------------------------------------------------
-    if current_content_key and content_lines:
-        finalize_content_block(data_dict, current_content_key, content_lines)
+        i += 1
 
-    return data_dict
+    # ----------------------------
+    # FINAL OUTPUT
+    # ----------------------------
+    result["METADATA"]["AUTHORS"] = list(authors)
+    result["METADATA"]["EMAILS"] = list(emails)
+    result["METADATA"]["AFFILIATIONS"] = list(affiliations)
+    result["METADATA"]["KEYWORDS"] = keywords
+    result["ABSTRACT"] = " ".join(abstract).strip()
 
+    return result
 
-# ============================================================
-# FINALIZE CONTENT BLOCK (remove last line if no ".")
-# ============================================================
-def finalize_content_block(data_dict, key, lines):
-    """
-    Saves content into data_dict[key],
-    removing the last line if it does not end with a real '.'.
-    """
-
-    def ends_with_period(line):
-        line = line.rstrip()  # remove spaces, tabs, unicode spaces
-        return line.endswith('.') or line.endswith('."')
-
-    # Remove last line if incomplete
-    while lines and not ends_with_period(lines[-1]):
-        lines.pop()
-
-    data_dict[key] = " ".join(lines).strip()
-
-
-# ============================================================
-# AUTHOR BLOCK PROCESSING
-# ============================================================
-
-def process_author_block(text):
-    text = text.strip()
-
-    # Extract emails
-    emails = re.findall(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", text)
-    for e in emails:
-        text = text.replace(e, "")
-
-    # 1. Extract Author Names Using Patterns
-    name_pattern = r"\b[A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)+\b"
-    found_names = re.findall(name_pattern, text)
-
-    # Remove duplicates while preserving order
-    unique_names = list(dict.fromkeys(found_names))
-
-    # 2. Remove names from text, leaving affiliations
-    affiliations_text = text
-    for n in unique_names:
-        affiliations_text = affiliations_text.replace(n, "")
-
-    # 3. Clean affiliations
-    affiliations_text = affiliations_text.replace("*", "").replace("†", "").replace("+", "").strip()
-
-    affiliations = re.split(r"\s{2,}|[*+]+|«|\+|—|-", affiliations_text)
-    affiliations = [a.strip() for a in affiliations if len(a.strip()) > 8]
-
-    # Combine authors + affiliations
-    authors_combined = unique_names + affiliations
-
-    return authors_combined, emails
-
-
-# ============================================================
-
-# if __name__ == "__main__":
-#     data = SummarizeSection()
-#     print(data)
+def SummarizeSection():
+    # print(os.path.join(os.getcwd(),".\data\content.txt"))
+    with open(os.path.join(os.getcwd(),"./data/content.txt"), 'r', encoding='utf-8', errors='replace') as file:
+        text = file.read()
+    nlp = spacy.load("en_core_web_md")
+    text = load_tagged_lines(text)
+    res = parse_paper(text,nlp)
+    return res
+if __name__ == '__main__':
+    SummarizeSection()

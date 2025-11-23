@@ -87,7 +87,8 @@ def extract_authors_heuristic(text):
     replacements = {
         "!”": ",", "!?": ",", "?!": ",", "”": ",", "“": ",", "’": ",", "‘": ",",
         "—": "-", "–": "-", "·": ",", "•": ",", "|": ",", "{": "(", "}": ")",
-        "[": ")", "]": ")", "  ": " ", '?': ',','°': ',',"*!": ",","!": ","
+        "[": ")", "]": ")", "  ": " ", '?': ',','°': ',',"*!": ",","!": ",",
+        "'*°": ",","°*'": ",","®": ",","'": ",",";": ",","™": ",","©": ",","~": ",","`": ","
     }
     for wrong, right in replacements.items():
         text = text.replace(wrong, right)
@@ -339,7 +340,7 @@ def SummarizeSection():
     res = parse_paper(lines, nlp)
     
     import json
-    print(json.dumps(res, indent=4))
+    # print(json.dumps(res, indent=4))
     return res
 
 if __name__ == '__main__':

@@ -2,20 +2,39 @@
 ---------PAGE 1--------
 
 
-[TITLE] Altered composition and function of intestinal microbiota in autism spectrum disorders: a systematic review
+[PLAIN_TEXT] This ICCV paper is the Open Access version, provided by the Computer Vision Foundation. Except for this watermark, it is identical to the accepted version; the final published version of the proceedings is available on IEEE Xplore.
+
+[TITLE] Rethinking Multi-Contrast MRI Super-Resolution: Rectangle-Window Cross-Attention Transformer and Arbitrary-Scale Upsampling
 
 
-[PLAIN_TEXT] Feitong Liu'*°, Jie Li’, Fan Wu', Huimin Zheng'*, Qiongling Peng’ and Hongwei Zhou® g
+[PLAIN_TEXT] Guangyuan Li’, Lei Zhao'*, Jiakai Sun', Zehua Lan', Zhanjie Zhang', Jiafu Chen", Zhijie Lin’, Huaizhong Lin'*, Wei Xing!* ‘College of Computer Science and Technology, Zhejiang University, Hangzhou, China Zhejiang University of Science and Technology, Hangzhou, China
+
+[PLAIN_TEXT] {cslgy, cszhl, csjk, zjucslzh, cszzj, chenjiafu, linhz, wxing}@zju.edu.cn linzhijie@zust.edu.cn
+
+[PLAIN_TEXT] {eslgy, cszhl, csjk, zjucslzh, cszzj, chenjiafu, linhz, wxing}@zju.edu.cn
+
+[PLAIN_TEXT] linzhijie@zust.edu.cn
 
 [TITLE] Abstract
 
 
-[PLAIN_TEXT] At present, the pathophysiology of autism spectrum disorder (ASD) remains unclear. Increasing evidence suggested that gut microbiota plays a critical role in gastrointestinal symptoms and behavioral impairment in ASD patients. The primary aim of this systematic review is to investigate potential evidence for the characteristic dysbiosis of gut microbiota in ASD patients compared with healthy controls (HCs). The MEDLINE, EMBASE, Web of Science and Scopus were systematically searched before March 2018. Human studies that compared the composition of gut microbiota in ASD patients and HCs using culture-independent techniques were included. Independent data extraction and quality assessment of studies were conducted according to PRISMA statement and Newcastle-Ottawa Scale. Phylogenetic Investigation of Communities by Reconstruction of Unobserved States (PICRUSt) was used to infer biological functional changes of the shifted microbiota with the available data in four studies. Sixteen studies with a total sample size of 381 ASD patients and 283 HCs were included in this systematic review. The quality of the studies was evaluated as medium to high. The overall changing of gut bacterial community in terms of 8-diversity was consistently observed in ASD patients compared with HCs. Furthermore, Bifidobacterium, Blautia, Dialister, Prevotella, Veillonella, and Turicibacter were consistently decreased, while Lactobacillus, Bacteroides, Desulfovibrio, and Clostridium were increased in patients with ASD relative to HCs in certain studies. This systematic review demonstrated significant alterations of gut microbiota in ASD patients compared with HCs, strengthen the evidence that dysbiosis of gut microbiota may correlate with behavioral abnormality in ASD patients. However, results of inconsistent changing also existed and further bigsampled well-designed studies are needed. Generally, as a potential mediator of risk factors, the gut microbiota could be a novel target for ASD patients in the future.
+[PLAIN_TEXT] Recently, several methods have explored the potential of multi-contrast magnetic resonance imaging (MRI) super-resolution (SR) and obtain results superior to singlecontrast SR methods. However, existing approaches still have two shortcomings: (1) They can only address fixed integer upsampling scales, such as 2x, 3x, and 4x, which require training and storing the corresponding model separately for each upsampling scale in clinic. (2) They lack direct interaction among different windows as they adopt the square window (e.g., 8X8) transformer network architecture, which results in inadequate modelling of longerrange dependencies. Moreover, the relationship between reference images and target images is not fully mined. To address these issues, we develop a novel network for multi-contrast MRI arbitrary-scale SR, dubbed as McASSR. Specifically, we design a rectangle-window cross-attention transformer to establish longer-range dependencies in MR images without increasing computational complexity and fully use reference information. Besides, we propose the reference-aware implicit attention as an upsampling module, achieving arbitrary-scale super-resolution via implicit neural representation, further fusing supplementary information of the reference image. Extensive and comprehensive experiments on both public and clinical datasets show that our McASSR yields superior performance over SOTA methods, demonstrating its great potential to be applied in Clinical practice. Code will be available at https: //github.com/GuangYuanKK/McASSR.
 
-[TITLE] Introduction
-
-
-[PLAIN_TEXT] Autism spectrum disorder (ASD) is a complex, pervasive neurobiological disorder, characterized by impaired social and communication skills, as well as stereotyped behaviors and restricted patterns of interests’. ASD includes autism (AD), Asperger’s Syndrome, and
+[TITLE] 1. Introduction
 
 
-[PLAIN_TEXT] Pervasive Development Disorder Not Otherwise Specified (PDD-NOS). According to recent estimate, the prevalence of ASD is elevating with 1-2% of children currently diagnosed worldwide’. The etiology of ASD remains unclear and appears to involve a complicated interaction of genetic and environmental factors**. By estimate, the heritability including de novo mutations, common variants, and short nucleotide polymorphisms identified in ASD cases altogether accounts for approximately 50% of the disorder”®. As well, the possibility for environmental risk factors and related medical comorbidities which
+[PLAIN_TEXT] Magnetic resonance imaging (MRI) can provide clear information on tissue structure and function by acquir-
+
+[PLAIN_TEXT] Magnetic resonance imaging (MRI) can provide clear information on tissue structure and function by acquir-
+
+[IMAGE CAPTION] Figure 1: Visual comparison with SOTA arbitrary-scale SR method LTE [13], the reconstructed SR images by our network contain sharper edges, more visual details, and fewer blurring artefacts. * means our implementation that uses SwinIR [17] as the backbone and concatenates the reference and target image as input.
+
+
+[IMAGE] ./data/extracted_figures/figure_15.png
+
+
+
+[PLAIN_TEXT] ing high-resolution (HR) magnetic resonance (MR) images, which is a non-invasive, radiation-free clinical imaging technique. However, acquiring these HR MR images is time-consuming, and the long acquisition time will cause discomfort to patients and introduce motion artifacts [15, 5]. Image super-resolution (SR) technology is utilized to alleviate this problem by generating the corresponding HR version from the low-resolution (LR) images obtained by MRI.
+
+
+[PLAIN_TEXT] At the early stage, the model-based [27, 23] and learning-based [37, 40] traditional methods are utilized to generate SR images. However, these methods have insufficient reconstruction performance under high upsampling scale, such as 4x. Recently, some deep learning

@@ -116,25 +116,27 @@ export default function Process() {
     y += 10;
 
     doc.setFontSize(11);
-
+    const TitleLines = doc.splitTextToSize(affs || "—", 150);
     doc.text(`Title:`, 10, y);
     doc.text(title, 40, y);
-    y += 8;
-
+    y += 15;
+    const autLines = doc.splitTextToSize(affs || "—", 150);
     doc.text(`Authors:`, 10, y);
     doc.text(authors || "—", 40, y);
-    y += 8;
-
+    y += 15;
+    const EmailLines = doc.splitTextToSize(affs || "—", 150);
     doc.text(`Emails:`, 10, y);
     doc.text(emails || "—", 40, y);
-    y += 8;
-
+    y += 15;
+    const affLines = doc.splitTextToSize(affs || "—", 150);
     doc.text(`Affiliations:`, 10, y);
     doc.text(affs || "—", 40, y);
-    y += 20;
+    y += affLines.length*5;
 
+    const keyLines = doc.splitTextToSize(affs || "—", 150);
     doc.text(`Keywords:`, 10, y);
     doc.text(keys || "—", 40, y);
+    
     y += 15;
 
     doc.text("Abstract:", 10, y);

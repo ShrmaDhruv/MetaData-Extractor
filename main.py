@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 import shutil
 import os
 import Python.OCR as my
-from Python.page2 import SummarizeSection
+from Python.MetaData import SummarizeSection
 import json
 
 

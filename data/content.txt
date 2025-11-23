@@ -2,39 +2,26 @@
 ---------PAGE 1--------
 
 
-[PLAIN_TEXT] This ICCV paper is the Open Access version, provided by the Computer Vision Foundation. Except for this watermark, it is identical to the accepted version; the final published version of the proceedings is available on IEEE Xplore.
-
-[TITLE] Rethinking Multi-Contrast MRI Super-Resolution: Rectangle-Window Cross-Attention Transformer and Arbitrary-Scale Upsampling
+[TITLE] Solving Spatial Supersensing Without Spatial Supersensing
 
 
-[PLAIN_TEXT] Guangyuan Li’, Lei Zhao'*, Jiakai Sun', Zehua Lan', Zhanjie Zhang', Jiafu Chen", Zhijie Lin’, Huaizhong Lin'*, Wei Xing!* ‘College of Computer Science and Technology, Zhejiang University, Hangzhou, China Zhejiang University of Science and Technology, Hangzhou, China
+[PLAIN_TEXT] Vishaal Udandarao! Shyamgopal Karthikt SurabhiS. Nath? Andreas Hochlehnert Matthias Bethge! Ameya Prabhu!
 
-[PLAIN_TEXT] {cslgy, cszhl, csjk, zjucslzh, cszzj, chenjiafu, linhz, wxing}@zju.edu.cn linzhijie@zust.edu.cn
+[PLAIN_TEXT] 'Tiibingen AI Center, University of Tiibingen ?Max Planck Institute for Biological Cybernetics
 
-[PLAIN_TEXT] {eslgy, cszhl, csjk, zjucslzh, cszzj, chenjiafu, linhz, wxing}@zju.edu.cn
+[TITLE] ©) github.com/bethgelab/supersanity
 
-[PLAIN_TEXT] linzhijie@zust.edu.cn
 
 [TITLE] Abstract
 
 
-[PLAIN_TEXT] Recently, several methods have explored the potential of multi-contrast magnetic resonance imaging (MRI) super-resolution (SR) and obtain results superior to singlecontrast SR methods. However, existing approaches still have two shortcomings: (1) They can only address fixed integer upsampling scales, such as 2x, 3x, and 4x, which require training and storing the corresponding model separately for each upsampling scale in clinic. (2) They lack direct interaction among different windows as they adopt the square window (e.g., 8X8) transformer network architecture, which results in inadequate modelling of longerrange dependencies. Moreover, the relationship between reference images and target images is not fully mined. To address these issues, we develop a novel network for multi-contrast MRI arbitrary-scale SR, dubbed as McASSR. Specifically, we design a rectangle-window cross-attention transformer to establish longer-range dependencies in MR images without increasing computational complexity and fully use reference information. Besides, we propose the reference-aware implicit attention as an upsampling module, achieving arbitrary-scale super-resolution via implicit neural representation, further fusing supplementary information of the reference image. Extensive and comprehensive experiments on both public and clinical datasets show that our McASSR yields superior performance over SOTA methods, demonstrating its great potential to be applied in Clinical practice. Code will be available at https: //github.com/GuangYuanKK/McASSR.
+[PLAIN_TEXT] Cambrian-S aims to take the first steps towards improving video “world models” with spatial supersensing by introducing (i) two benchmarks, VSI-Super-Recall (VSR) and VSI-Super-Counting (VSC), and (ii) bespoke predictive sensing inference strategies tailored to each benchmark. In this work, we conduct a critical analysis of Cambrian-S across both these fronts. First, we introduce a simple baseline, NoSense, which discards almost all temporal structure and uses only a bag-of-words SigLIP model, yet near-perfectly solves VSR, achieving 95% accuracy even on 4-hour videos. This shows benchmarks like VSR can be nearly solved without spatial cognition, world modeling or spatial supersensing. Second, we hypothesize that the tailored inference methods proposed by Cambrian-S likely exploit shortcut heuristics in the benchmark. We illustrate this with a simple sanity check on the VSC benchmark, called VSC-Repeat: We concatenate each video with itself 1-5 times, which does not change the number of unique objects. However, this simple perturbation entirely collapses the mean relative accuracy of Cambrian-S from 42.0% to 0%. A system that performs spatial supersensing and integrates information across experiences should recognize views of the same scene and keep object-count predictions unchanged; instead, Cambrian-S’ inference algorithm relies largely on a shortcut in the VSC benchmark that rooms are never revisited. Taken together, our findings suggest that (i) current VSI-Super benchmarks do not yet reliably measure spatial supersensing, and (ii) predictive-sensing inference recipes used by Cambrian-S improve performance by inadvertently exploiting shortcuts rather than from robust spatial supersensing. We include the response from the Cambrian-S authors (in Appendix A) to provide a balanced perspective alongside our claims.
 
-[TITLE] 1. Introduction
-
-
-[PLAIN_TEXT] Magnetic resonance imaging (MRI) can provide clear information on tissue structure and function by acquir-
-
-[PLAIN_TEXT] Magnetic resonance imaging (MRI) can provide clear information on tissue structure and function by acquir-
-
-[IMAGE CAPTION] Figure 1: Visual comparison with SOTA arbitrary-scale SR method LTE [13], the reconstructed SR images by our network contain sharper edges, more visual details, and fewer blurring artefacts. * means our implementation that uses SwinIR [17] as the backbone and concatenates the reference and target image as input.
+[IMAGE CAPTION] Figure 1: (Left) NoSense solves VSR without supersensing. Our NoSense baseline uses only a SigLIP model with independent frame-level processing — no video model, LLM, long-term memory, or temporal reasoning — yet almost perfectly solves VSR, showing that the VSR benchmark can be solved without spatial supersensing. (Right) Cambrian-S exploits VSC-specific shortcuts. For the VSC benchmark, we repeat each 10-min video 1—5 times; a supersensing model should output the same object counts, since the unique object count stays the same. Instead, Cambrian-S’ mean relative accuracy collapses from 42% to 0% after 5 repeats, indicating that its surprise-based segmentation inference method relies on VSC-specific shortcuts rather than genuine spatial cognition.
 
 
-[IMAGE] ./data/extracted_figures/figure_15.png
+[IMAGE] ./data/extracted_figures/figure_8.png
 
 
+[IMAGE] ./data/extracted_figures/figure_12.png
 
-[PLAIN_TEXT] ing high-resolution (HR) magnetic resonance (MR) images, which is a non-invasive, radiation-free clinical imaging technique. However, acquiring these HR MR images is time-consuming, and the long acquisition time will cause discomfort to patients and introduce motion artifacts [15, 5]. Image super-resolution (SR) technology is utilized to alleviate this problem by generating the corresponding HR version from the low-resolution (LR) images obtained by MRI.
-
-
-[PLAIN_TEXT] At the early stage, the model-based [27, 23] and learning-based [37, 40] traditional methods are utilized to generate SR images. However, these methods have insufficient reconstruction performance under high upsampling scale, such as 4x. Recently, some deep learning

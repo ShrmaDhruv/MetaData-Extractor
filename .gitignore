@@ -9,3 +9,7 @@ test/
 uploads/
 __pycache__/
 data/yolo_config/
+*.pdf
+*.png
+*.docx
+claude-logs/

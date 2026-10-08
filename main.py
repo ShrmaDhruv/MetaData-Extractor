@@ -66,8 +66,7 @@ async def lifespan(app: FastAPI):
 
     yield  # App runs here
 
-    # === Shutdown (optional) ===
-    # Add shutdown code here if needed
+
 
 
 app = FastAPI(lifespan=lifespan)

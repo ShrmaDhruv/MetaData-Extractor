@@ -13,3 +13,8 @@ data/yolo_config/
 *.png
 *.docx
 claude-logs/
+*.csv
+*.xml
+.env
+data/
+tests/

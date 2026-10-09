@@ -4,8 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import shutil
 import os
-import Python.OCR as my
-from Python.MetaData import SummarizeSection
+from Python.GrobidExtractor import grobid_available, extract_primary, merge_results
 import json
 import uuid
 
@@ -116,8 +115,26 @@ async def healthz():
 async def process_file(filename: str | None = None):
     try:
         selected_filename = resolve_uploaded_file(filename)
-        my.output(selected_filename)
-        result = SummarizeSection()
+        pdf_path = os.path.join(UPLOAD_FOLDER, selected_filename)
+
+        # Primary path: GROBID (fulltext + regex recovery)
+        result = None
+        if grobid_available():
+            try:
+                result = extract_primary(pdf_path)
+            except Exception as e:
+                print(f"GROBID failed, falling back to OCR: {e}")
+        else:
+            print("GROBID not reachable, falling back to OCR")
+
+        # Fallback path: YOLO + Tesseract + regex (scanned PDFs / GROBID down).
+        # Imported lazily so torch/YOLO only load when actually needed.
+        if result is None or not result["ABSTRACT"]:
+            import Python.OCR as my
+            from Python.MetaData import SummarizeSection
+            my.output(selected_filename)
+            ocr_result = SummarizeSection()
+            result = merge_results(result, ocr_result) if result else ocr_result
 
         # Ensure JSON serializable
         safe_json = json.loads(json.dumps(result, default=str))

@@ -185,7 +185,7 @@ def parse_paper(lines, nlp):
             in_metadata_section = False  
             in_abstract = True
             
-            text = re.sub(r"^abstract[:\s-]*", "", text, flags=re.I).strip()
+            text = re.sub(r"^abstract[:\s\-—–]*", "", text, flags=re.I).strip()
             if text:
                 abstract.append(text)
             i += 1
@@ -195,7 +195,7 @@ def parse_paper(lines, nlp):
             # Check if Abstract ends via Keywords or Index Terms
             if "keyword" in txt_lower or "index terms" in txt_lower:
                 in_abstract = False
-                kw = re.sub(r"(?i)^[^\w]*?(?:keywords?|index\s+terms?)\b[:\s-]*", "", text).strip()
+                kw = re.sub(r"(?i)^[^\w]*?(?:keywords?|index\s+terms?)\b[:\s\-—–]*", "", text).strip()
                 kw = kw.split(",")
                 keywords.extend([clean(k) for k in kw if k.strip()])
                 i += 1
@@ -269,7 +269,7 @@ def parse_paper(lines, nlp):
                 i = j + 1
                 continue
             else:
-                kw = re.sub(r"(?i)^[^\w]*?(?:keywords?|index\s+terms?)\b[:\s-]*", "", text).strip()
+                kw = re.sub(r"(?i)^[^\w]*?(?:keywords?|index\s+terms?)\b[:\s\-—–]*", "", text).strip()
                 kw = kw.split(",")
                 keywords.extend([clean(k) for k in kw if k.strip()])
                 i += 1

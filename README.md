@@ -15,6 +15,7 @@ Install Python dependencies in the project virtual environment, then run the API
 In another terminal, run the frontend:
 
 ```powershell
+cd frontend
 npm install
 npm start
 ```

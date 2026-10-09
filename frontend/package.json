@@ -1,0 +1,19 @@
+{
+  "name": "metadata-extractor",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "parcel index.html --no-cache --dist-dir .parcel-dev",
+    "build": "parcel build index.html --dist-dir dist --no-cache"
+  },
+  "author": "Dhruv",
+  "license": "ISC",
+  "dependencies": {
+    "jspdf": "^3.0.4",
+    "parcel": "^2.16.1",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-dropzone": "^14.3.8",
+    "react-router-dom": "^6.30.1"
+  },
+  "private": true
+}

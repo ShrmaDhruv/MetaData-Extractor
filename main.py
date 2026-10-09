@@ -12,6 +12,8 @@ import uuid
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
 DIST_DIR = os.path.join(BASE_DIR, "dist")
+if not os.path.isdir(DIST_DIR):
+    DIST_DIR = os.path.join(BASE_DIR, "frontend", "dist")  # local `npm run build`
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 PDF_NAME = ""

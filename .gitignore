@@ -18,3 +18,5 @@ claude-logs/
 .env
 data/
 tests/
+models/
+.parcel-dev/

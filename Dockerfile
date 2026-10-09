@@ -2,12 +2,11 @@ FROM node:20-bookworm-slim AS frontend
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY frontend/package*.json ./
 RUN npm ci
 
-COPY index.html main.jsx style.css .postcssrc ./
-COPY components ./components
-COPY utils ./utils
+COPY frontend/index.html ./
+COPY frontend/src ./src
 RUN npm run build
 
 
